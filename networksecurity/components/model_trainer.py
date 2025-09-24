@@ -20,6 +20,13 @@ from sklearn.ensemble import (
     RandomForestClassifier
 )
 import mlflow
+import dagshub
+from urllib.parse import urlparse
+
+#dagshub.init(repo_owner='niru17', repo_name='NetworkSecurity-MLOPS', mlflow=True)
+os.environ["MLFLOW_TRACKING_URI"]="https://dagshub.com/niru17/NetworkSecurity-MLOPS.mlflow"
+os.environ["MLFLOW_TRACKING_USERNAME"]="niru17"
+os.environ["MLFLOW_TRACKING_PASSWORD"]="****"
 
 class ModelTrainer:
     def __init__(self, data_transformation_artifact:DataTransformationArtifact, model_trainer_config:ModelTrainerConfig):
@@ -29,15 +36,31 @@ class ModelTrainer:
         except Exception as e:
             raise NetworkSecurityException(e,sys)
         
-    def track_mlflow(self,best_model,classificationmetric):
-        with mlflow.start_run():
-            f1_score=classificationmetric.f1_score
-            precision_score=classificationmetric.precision_score
-            recall_score=classificationmetric.recall_score
+    # def track_mlflow(self,best_model,classificationmetric):
+    #     mlflow.set_tracking_uri("https://dagshub.com/niru17/NetworkSecurity-MLOPS.mlflow")
+    #     tracking_url_type_store = urlparse(mlflow.get_tracking_uri()).scheme
+    #     with mlflow.start_run():
+    #         f1_score=classificationmetric.f1_score
+    #         precision_score=classificationmetric.precision_score
+    #         recall_score=classificationmetric.recall_score
             
-            mlflow.log_metric("f1_score",f1_score)
-            mlflow.log_metric("precision",precision_score)
-            mlflow.log_metric("recall_score",recall_score)
+    #         mlflow.log_metric("f1_score",f1_score)
+    #         mlflow.log_metric("precision",precision_score)
+    #         mlflow.log_metric("recall_score",recall_score)
+    #         mlflow.sklearn.log_model(
+    #         sk_model=best_model,
+    #         artifact_path="model"
+    #     )
+    def track_mlflow(self, best_model, classificationmetric):
+    # Set DagsHub MLflow tracking URI
+        mlflow.set_tracking_uri("https://dagshub.com/niru17/NetworkSecurity-MLOPS.mlflow")
+        mlflow.set_experiment("ModelTrainer")
+
+        with mlflow.start_run():
+            # Log metrics
+            mlflow.log_metric("f1_score", classificationmetric.f1_score)
+            mlflow.log_metric("precision", classificationmetric.precision_score)
+            mlflow.log_metric("recall_score", classificationmetric.recall_score)
             mlflow.sklearn.log_model(best_model,"model")
     
     def train_model(self,X_train,y_train,X_test,y_test):
